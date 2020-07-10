@@ -56,17 +56,11 @@ class bars(QMainWindow):
 
         #self.barPlot.setXRange(0,64)
         #self.barPlot.setYRange(0,5)
-
-        self.dataArr = self.sData[1:]
-        self.yShiftArr = []
    
         for i in range(len(self.sData[:64])):
             self.barXArr.append(i*width)
             with contextlib.suppress(IndexError):
                 self.sData[i] = (self.sData[i-1]+self.sData[i+1])/2
-
-            self.dataArr[i] *= 250
-            self.yShiftArr.append(self.sData[i]/2 - 100)
 
         self.graph.setOpts(x=self.barXArr, height=self.sData[:64], width=width-((width+gap)/gap), brush=QColor(color), pen=QColor(outline))
 
