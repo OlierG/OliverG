@@ -1,0 +1,93 @@
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtTest import *
+import pyqtgraph as pg
+
+import sys
+import contextlib
+import random
+import struct
+import numpy as np
+
+import pyaudio
+from scipy.fftpack import fft
+
+class bars(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.mainPlot = pg.GraphicsWindow()
+        
+        self.screen = app.primaryScreen()
+        self.size = self.screen.size()
+
+        self.screenWidth = self.size.width()
+        self.screenHeight = self.size.height()
+        
+        self.mainPlot = pg.GraphicsWindow(title="Screensaver")
+        self.mainPlot.setGeometry(0,0,self.screenWidth,self.screenHeight)
+
+        self.barPlot = self.mainPlot.addPlot()
+        
+        self.barPlot.hideAxis("bottom")
+        self.barPlot.hideAxis("left")
+
+        self.initArr = []
+
+        self.p = pyaudio.PyAudio()
+        self.output = self.p.open(format = pyaudio.paFloat32,
+                                  channels = 1,
+                                  rate = 44100,
+                                  input = True,
+                                  output = True,
+                                  frames_per_buffer = 1024,
+                                  input_device_index=2)
+
+        for i in range(64):
+            self.initArr.append(i)
+        self.graph = pg.BarGraphItem(x=self.initArr, height=self.initArr, width=10, brush=QColor("Black"), pen=QColor("Black"))
+        self.barPlot.addItem(self.graph)
+
+        self.readOutput()
+
+    def smoothBars(self, color="black", width=10, gap=5, outline="White"):
+        self.barXArr = []
+
+        #self.barPlot.setXRange(0,64)
+        #self.barPlot.setYRange(0,5)
+
+        self.dataArr = self.sData[1:]
+        self.yShiftArr = []
+   
+        for i in range(len(self.sData[:64])):
+            self.barXArr.append(i*width)
+            with contextlib.suppress(IndexError):
+                self.sData[i] = (self.sData[i-1]+self.sData[i+1])/2
+
+            self.dataArr[i] *= 250
+            self.yShiftArr.append(self.sData[i]/2 - 100)
+
+        self.graph.setOpts(x=self.barXArr, height=self.sData[:64], width=width-((width+gap)/gap), brush=QColor(color), pen=QColor(outline))
+
+    def readOutput(self):
+        while True:
+            QTest.qWait(1)
+                
+            self.data = self.output.read(1024, exception_on_overflow=False)
+            
+            self.data = struct.unpack("4096B", self.data)
+            self.sData = fft(np.array(self.data, dtype="int8") - 128)
+            self.sData = (np.abs(self.sData[0 : int(1024)])* 2/ (256 * 1024))
+            
+            self.sData[self.sData <= 0.001] = 0
+
+            self.smoothBars()
+
+def exceptHook(e,v,t):
+    sys.__excepthook__(e,v,t)
+
+sys.excepthook = exceptHook
+
+app = QApplication(sys.argv)
+b = bars()
+sys.exit(app.exec())
