@@ -24,7 +24,7 @@ class bars(QMainWindow):
         self.screenWidth = self.size.width()
         self.screenHeight = self.size.height()
         
-        self.mainPlot = pg.GraphicsWindow(title="Screensaver")
+        self.mainPlot = pg.GraphicsWindow(title="Visualiser")
         self.mainPlot.setGeometry(0,0,self.screenWidth,self.screenHeight)
 
         self.barPlot = self.mainPlot.addPlot()
