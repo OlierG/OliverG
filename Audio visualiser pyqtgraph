@@ -45,6 +45,7 @@ class bars(QMainWindow):
 
         for i in range(64):
             self.initArr.append(i)
+            
         self.graph = pg.BarGraphItem(x=self.initArr, height=self.initArr, width=10, brush=QColor("Black"), pen=QColor("Black"))
         self.barPlot.addItem(self.graph)
 
